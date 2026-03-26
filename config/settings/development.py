@@ -10,25 +10,24 @@ import dj_database_url
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 
-#! DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME':     config('DB_NAME',     default='blog_dev'),
-#         'USER':     config('DB_USER',     default='postgres'),
-#         'PASSWORD': config('DB_PASSWORD', default='postgres'),
-#         'HOST':     config('DB_HOST',     default='db'),   # IMPORTANT
-#         'PORT':     config('DB_PORT',     default='5432'),
-#         'CONN_MAX_AGE': 60,
-#     }
-# }
+USE_POSTGRES = config("USE_POSTGRES", default=False, cast=bool)
 
-DATABASES = {
-    "default": dj_database_url.config(
-        default=config("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
+if USE_POSTGRES:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=config("DATABASE_URL", default="postgresql://postgres:postgres@localhost:5432/blog_dev"),
+            conn_max_age=600,
+            ssl_require=False,
+        )
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+
 
 # Print emails to console in dev — no email provider needed
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
