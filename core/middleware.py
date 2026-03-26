@@ -1,24 +1,51 @@
+"""
+core/middleware.py
+==================
+FIXED: __init__ typo (was __int__).
+ADDED: SecurityHeadersMiddleware referenced in settings.
+"""
 import time
 import logging
 
 logger = logging.getLogger(__name__)
 
+
 class RequestTimingMiddleware:
-  def __int__(self, get_response):
-    self.get_response = get_response
+    """Log slow requests and add X-Response-Time header."""
 
-  def __call__(self, request):
-    start = time.perf_counter()
-    response = self.get_response(request)
-    duration = time.perf_counter() - start
+    def __init__(self, get_response):          # FIXED: was __int__
+        self.get_response = get_response
 
-    if duration > 1.0:
-      logger.warning(
-        "SLOW REQUEST: %s %s → %dms (status=%d)",
-        request.method,
-        request.path,
-        int(duration * 1000),
-        response.status_code
-      )
-    response['X-Response-Time'] = f'{duration * 1000:.1f}ms'
-    return response
+    def __call__(self, request):
+        start = time.perf_counter()
+        response = self.get_response(request)
+        duration = time.perf_counter() - start
+
+        if duration > 1.0:
+            logger.warning(
+                "SLOW REQUEST: %s %s → %dms (status=%d)",
+                request.method,
+                request.path,
+                int(duration * 1000),
+                response.status_code,
+            )
+        response['X-Response-Time'] = f'{duration * 1000:.1f}ms'
+        return response
+
+
+class SecurityHeadersMiddleware:
+    """
+    Add security headers to every response.
+    Supplements Django's built-in security headers.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['X-Frame-Options'] = 'DENY'
+        response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+        return response

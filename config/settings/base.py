@@ -44,13 +44,14 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-    "core",  # Core system utilities and settings
+    "core",
     "apps.users",
     "apps.blog",
     "apps.projects",
     "apps.analytics",
     "apps.newsletter",
     "apps.contact",
+    'apps.monetization',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
