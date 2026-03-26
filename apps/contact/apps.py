@@ -1,5 +1,15 @@
+"""
+apps/contact/apps.py
+"""
+
 from django.apps import AppConfig
 
 
 class ContactConfig(AppConfig):
-    name = "contact"
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'apps.contact'
+    verbose_name = 'Contact Messages'
+
+    def ready(self):
+        """Import signals when app is ready."""
+        pass

@@ -1,5 +1,15 @@
+"""
+apps/newsletter/apps.py
+"""
+
 from django.apps import AppConfig
 
 
 class NewsletterConfig(AppConfig):
-    name = "newsletter"
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'apps.newsletter'
+    verbose_name = 'Newsletter & Subscribers'
+
+    def ready(self):
+        """Import signals when app is ready."""
+        pass

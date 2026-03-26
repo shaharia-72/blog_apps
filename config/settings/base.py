@@ -41,10 +41,10 @@ THIRD_PARTY_APPS = [
     "robots",
     "cloudinary",
     "cloudinary_storage",
-    "imagekit",
 ]
 
 LOCAL_APPS = [
+    "core",  # Core system utilities and settings
     "apps.users",
     "apps.blog",
     "apps.projects",
@@ -69,6 +69,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "core.middleware.RequestTimingMiddleware",  # Log slow requests
+    "core.middleware.SecurityHeadersMiddleware",  # Security headers
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -109,6 +110,21 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# ── Storage Configuration ─────────────────────────────────────
+USE_CLOUDINARY = config("USE_CLOUDINARY", default=False, cast=bool)
+
+if USE_CLOUDINARY:
+    # Cloudinary configuration
+    CLOUDINARY_STORAGE = {
+        "CLOUD_NAME": config("CLOUD_NAME"),
+        "API_KEY": config("API_KEY"),
+        "API_SECRET": config("API_SECRET"),
+    }
+    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+else:
+    # Local file storage
+    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+
 # ── Django REST Framework ─────────────────────────────────────
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -137,6 +153,7 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%SZ",
+    "EXCEPTION_HANDLER": "core.exceptions.custom_exception_handler",
 }
 
 # ── JWT ───────────────────────────────────────────────────────
@@ -270,11 +287,4 @@ FEED_SETTINGS = {
     "TITLE": config("SITE_NAME", default="YourBlog") + " — Latest Posts",
     "DESCRIPTION": "Latest articles on System Design, DSA, AI/ML, Python, and more.",
     "ITEMS_COUNT": 20,  # Number of posts in RSS feed
-}
-
-
-CLOUDINARY_STORAGE = {
-    "CLOUD_NAME": config("CLOUD_NAME"),
-    "API_KEY": config("API_KEY"),
-    "API_SECRET": config("API_SECRET"),
 }
