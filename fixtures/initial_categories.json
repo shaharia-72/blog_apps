@@ -1,0 +1,106 @@
+[
+  {
+    "model": "blog.category",
+    "pk": 1,
+    "fields": {
+      "name": "System Design",
+      "slug": "system-design",
+      "description": "Scalable architectures, distributed systems, load balancing, microservices, and production-ready system design patterns.",
+      "color": "#6366f1",
+      "icon": "🏗️",
+      "order": 1,
+      "is_active": true
+    }
+  },
+  {
+    "model": "blog.category",
+    "pk": 2,
+    "fields": {
+      "name": "Backend Engineering",
+      "slug": "backend",
+      "description": "Django, REST APIs, authentication, caching with Redis, Celery task queues, and production backend best practices.",
+      "color": "#0ea5e9",
+      "icon": "⚙️",
+      "order": 2,
+      "is_active": true
+    }
+  },
+  {
+    "model": "blog.category",
+    "pk": 3,
+    "fields": {
+      "name": "DSA",
+      "slug": "dsa",
+      "description": "Data structures and algorithms — arrays, trees, graphs, dynamic programming, and interview preparation.",
+      "color": "#f59e0b",
+      "icon": "🧩",
+      "order": 3,
+      "is_active": true
+    }
+  },
+  {
+    "model": "blog.category",
+    "pk": 4,
+    "fields": {
+      "name": "AI / ML",
+      "slug": "ai-ml",
+      "description": "Machine learning concepts, model training, neural networks, and practical AI implementations in Python.",
+      "color": "#10b981",
+      "icon": "🤖",
+      "order": 4,
+      "is_active": true
+    }
+  },
+  {
+    "model": "blog.category",
+    "pk": 5,
+    "fields": {
+      "name": "Generative AI",
+      "slug": "generative-ai",
+      "description": "LLMs, prompt engineering, RAG systems, agentic AI workflows, and building with GPT-4, Claude, and open-source models.",
+      "color": "#8b5cf6",
+      "icon": "✨",
+      "order": 5,
+      "is_active": true
+    }
+  },
+  {
+    "model": "blog.category",
+    "pk": 6,
+    "fields": {
+      "name": "Python",
+      "slug": "python",
+      "description": "Python tips, advanced patterns, performance optimization, decorators, generators, and clean code practices.",
+      "color": "#3b82f6",
+      "icon": "🐍",
+      "order": 6,
+      "is_active": true
+    }
+  },
+  {
+    "model": "blog.category",
+    "pk": 7,
+    "fields": {
+      "name": "Databases",
+      "slug": "databases",
+      "description": "PostgreSQL, indexing strategies, query optimization, Redis, MongoDB, and database design for high traffic systems.",
+      "color": "#ef4444",
+      "icon": "🗄️",
+      "order": 7,
+      "is_active": true
+    }
+  },
+  {
+    "model": "blog.category",
+    "pk": 8,
+    "fields": {
+      "name": "Automation",
+      "slug": "automation",
+      "description": "n8n workflows, task automation, CI/CD pipelines, scripting, and building automated systems.",
+      "color": "#f97316",
+      "icon": "🔄",
+      "order": 8,
+      "is_active": true
+    }
+  }
+]
