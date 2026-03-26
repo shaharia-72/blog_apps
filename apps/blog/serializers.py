@@ -250,8 +250,8 @@ class BlogDetailSerializer(serializers.ModelSerializer):
                 "timeRequired": f"PT{obj.read_time}M",  # ISO 8601 duration
                 "wordCount": sum(
                     len(s.content.split())
-                    for s in obj.sections.filter(section_type="markdown")
-                    if s.content
+                    for s in obj.sections.all()
+                    if s.section_type == "markdown" and s.content
                 ),
             }
         )
@@ -267,7 +267,7 @@ class BlogDetailSerializer(serializers.ModelSerializer):
         count = settings.BLOG_SETTINGS.get("RELATED_POSTS_COUNT", 3)
         tag_ids = obj.tags.values_list("id", flat=True)
 
-        related = (
+        related = list(
             Blog.objects.published()
             .exclude(id=obj.id)
             .filter(category=obj.category)
@@ -275,8 +275,8 @@ class BlogDetailSerializer(serializers.ModelSerializer):
             .order_by("-shared", "-published_at")[:count]
         )
 
-        if related.count() < count:
-            related = (
+        if len(related) < count:
+            related = list(
                 Blog.objects.published()
                 .exclude(id=obj.id)
                 .order_by("-published_at")[:count]

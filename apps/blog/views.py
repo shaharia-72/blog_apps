@@ -10,10 +10,12 @@ Caching strategy:
   Featured    → cached 10 min
 """
 
+import hashlib
 import logging
 from django.conf import settings
 from django.core.cache import cache
 from django.db import models
+from django.db.models import Count, Q, Avg
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -109,7 +111,7 @@ class BlogViewSet(viewsets.ReadOnlyModelViewSet):
         so ?category=backend and ?tag=redis have separate caches.
         """
         qs = request.META.get("QUERY_STRING", "")
-        cache_key = f"blog:list:{hash(qs)}"
+        cache_key = f"blog:list:{hashlib.md5(qs.encode()).hexdigest()}"
 
         cached = cache.get(cache_key)
         if cached:
@@ -192,17 +194,15 @@ class BlogViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(cached)
 
         from apps.analytics.models import BlogView
-        from django.db.models import Avg
 
-        qs = BlogView.objects.filter(blog=blog)
+        agg = BlogView.objects.filter(blog=blog).aggregate(
+            avg_time=Avg("time_spent_seconds"),
+            avg_scroll=Avg("scroll_depth_percent"),
+        )
         data = {
             "views": blog.views,
-            "avg_time_spent_seconds": int(
-                qs.aggregate(a=Avg("time_spent_seconds"))["a"] or 0
-            ),
-            "avg_scroll_depth_percent": int(
-                qs.aggregate(a=Avg("scroll_depth_percent"))["a"] or 0
-            ),
+            "avg_time_spent_seconds": int(agg["avg_time"] or 0),
+            "avg_scroll_depth_percent": int(agg["avg_scroll"] or 0),
         }
         cache.set(cache_key, data, settings.BLOG_SETTINGS["CACHE_ANALYTICS_TTL"])
         return Response(data)
@@ -217,10 +217,8 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     GET /api/v1/blogs/categories/{slug}/ → Category detail
     """
 
-    from django.db.models import Count, Q as DQ
-
     queryset = Category.objects.filter(is_active=True).annotate(
-        blog_count=models.Count("blogs", filter=models.Q(blogs__status="published"))
+        blog_count=Count("blogs", filter=Q(blogs__status="published"))
     )
     lookup_field = "slug"
     permission_classes = [AllowAny]
@@ -241,7 +239,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     """GET /api/v1/blogs/tags/ — Tags that have at least one published post."""
 
     queryset = Tag.objects.annotate(
-        blog_count=models.Count("blogs", filter=models.Q(blogs__status="published"))
+        blog_count=Count("blogs", filter=Q(blogs__status="published"))
     ).filter(blog_count__gt=0)
     serializer_class = TagSerializer
     permission_classes = [AllowAny]
