@@ -4,6 +4,7 @@ core/middleware.py
 FIXED: __init__ typo (was __int__).
 ADDED: SecurityHeadersMiddleware referenced in settings.
 """
+
 import time
 import logging
 
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 class RequestTimingMiddleware:
     """Log slow requests and add X-Response-Time header."""
 
-    def __init__(self, get_response):          # FIXED: was __int__
+    def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
@@ -29,7 +30,7 @@ class RequestTimingMiddleware:
                 int(duration * 1000),
                 response.status_code,
             )
-        response['X-Response-Time'] = f'{duration * 1000:.1f}ms'
+        response["X-Response-Time"] = f"{duration * 1000:.1f}ms"
         return response
 
 
@@ -44,8 +45,8 @@ class SecurityHeadersMiddleware:
 
     def __call__(self, request):
         response = self.get_response(request)
-        response['X-Content-Type-Options'] = 'nosniff'
-        response['X-Frame-Options'] = 'DENY'
-        response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-        response['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+        response["X-Content-Type-Options"] = "nosniff"
+        response["X-Frame-Options"] = "DENY"
+        response["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         return response
