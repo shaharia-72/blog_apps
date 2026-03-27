@@ -15,6 +15,7 @@ SECRET_KEY = config("SECRET_KEY")
 
 # ── Apps ──────────────────────────────────────────────────────
 DJANGO_APPS = [
+    "users",
     "admin_interface",  # Beautiful admin — MUST be before django.contrib.admin
     "colorfield",
     "django.contrib.admin",

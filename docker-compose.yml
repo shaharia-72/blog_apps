@@ -1,6 +1,18 @@
 version: "3.9"
 
 services:
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_healthy
+
   redis:
     image: redis:latest
     ports:
@@ -20,13 +32,30 @@ services:
     image: blogapps-celery:latest
     restart: unless-stopped
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     working_dir: /app
     volumes:
-      - .:/app:ro
+      - .:/app
     env_file:
       - .env
-    command: ["celery", "-A", "${CELERY_APP}", "worker", "-l", "info", "--concurrency=1"]
+    command: ["celery", "-A", "config", "worker", "-l", "info", "--concurrency=2", "-Q", "default,email,analytics"]
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: docker/celery/Dockerfile
+    image: blogapps-celery:latest
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    working_dir: /app
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    command: ["celery", "-A", "config", "beat", "-l", "info", "--scheduler", "django_celery_beat.schedulers:DatabaseScheduler"]
 
 volumes:
   redis-data:

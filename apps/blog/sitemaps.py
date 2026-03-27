@@ -2,27 +2,18 @@
 apps/blog/sitemaps.py
 ======================
 Django sitemaps — generates /sitemap.xml automatically.
-Submit the sitemap URL to Google Search Console for faster indexing.
 
-Priority guide:
-  1.0 = most important (homepage)
-  0.8 = blog posts (main content — high value)
-  0.6 = categories
-  0.5 = static pages
+FIX: Removed duplicate class-level `priority = 0.5` from StaticViewSitemap.
+     The priority() METHOD already handles priorities per item.
+     Having both the attribute AND the method causes the method to be
+     silently shadowed in some Django versions.
 """
 
 from django.contrib.sitemaps import Sitemap
-from django.conf import settings
 from .models import Blog, Category
 
 
 class BlogSitemap(Sitemap):
-    """
-    One entry per published blog post.
-    Google uses lastmod to detect when content changed
-    and prioritise recrawling.
-    """
-
     changefreq = "weekly"
     priority = 0.8
 
@@ -37,8 +28,6 @@ class BlogSitemap(Sitemap):
 
 
 class CategorySitemap(Sitemap):
-    """One entry per active category page."""
-
     changefreq = "weekly"
     priority = 0.6
 
@@ -53,15 +42,19 @@ class CategorySitemap(Sitemap):
 
 
 class StaticViewSitemap(Sitemap):
-    """Static pages: homepage, blog index, projects, contact."""
+    """
+    Static pages: homepage, blog index, projects, contact.
+    FIX: Removed `priority = 0.5` class attribute — it conflicts with the
+    priority() method below. The method already returns per-item priorities.
+    """
 
     changefreq = "monthly"
-    priority = 0.5
+    # NOTE: Do NOT add `priority = 0.5` here — the method below handles it.
 
     def items(self):
         return [
-            ("/", 1.0),  # Homepage — highest priority
-            ("/blog/", 0.9),  # Blog index
+            ("/", 1.0),
+            ("/blog/", 0.9),
             ("/projects/", 0.6),
             ("/contact/", 0.4),
             ("/about/", 0.4),

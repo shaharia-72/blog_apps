@@ -1,6 +1,13 @@
 """
 apps/projects/views.py
+
+FIX: hash(qs) is NOT stable across Python processes (PYTHONHASHSEED is
+     randomized per process). Two Gunicorn workers would produce different
+     cache keys for the same URL, making the cache useless.
+     Use hashlib.md5() like BlogViewSet does — it's deterministic.
 """
+
+import hashlib
 
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
@@ -42,7 +49,9 @@ class ProjectViewSet(viewsets.ReadOnlyModelViewSet):
 
     def list(self, request, *args, **kwargs):
         qs = request.META.get("QUERY_STRING", "")
-        cache_key = f"projects:list:{hash(qs)}"
+        # FIX: Use md5 instead of hash() — md5 is deterministic across processes.
+        # hash() uses PYTHONHASHSEED which is random per process in Python 3.3+.
+        cache_key = f"projects:list:{hashlib.md5(qs.encode()).hexdigest()}"
         cached = cache.get(cache_key)
         if cached:
             return Response(cached)
@@ -65,7 +74,8 @@ class AdminProjectViewSet(viewsets.ModelViewSet):
     def _clear_cache(self):
         try:
             cache.delete_pattern("projects:list:*")
-        except Exception:
+        except AttributeError:
+            # Fallback: delete a few known patterns if delete_pattern unavailable
             cache.delete("projects:list:")
 
     def perform_create(self, serializer):

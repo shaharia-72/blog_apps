@@ -1,8 +1,8 @@
 """
 apps/blog/tasks.py
-===================
-Celery background tasks for the blog app.
-Run automatically by celery beat on schedule.
+
+FIX: cache.delete_pattern() is django-redis specific. Added AttributeError
+     fallback so the task doesn't crash if a different cache backend is used.
 """
 
 from celery import shared_task
@@ -20,13 +20,11 @@ def rebuild_sitemap(self):
     Runs every 6 hours via celery beat.
     """
     try:
-        # Django caches the sitemap response — delete it to force rebuild
         cache.delete("sitemap:blogs")
         cache.delete("sitemap:categories")
         cache.delete("sitemap:static")
         logger.info("Sitemap cache cleared — will rebuild on next request")
     except Exception as exc:
-        # Retry with exponential backoff: 1m, 2m, 4m
         raise self.retry(exc=exc, countdown=60 * (2**self.request.retries))
 
 
@@ -37,7 +35,14 @@ def rebuild_rss_feed(self):
     Runs every 30 minutes via celery beat.
     """
     try:
-        cache.delete_pattern("blog:rss:*")
+        # FIX: delete_pattern() is django-redis specific.
+        # Wrap in try/except so this task works with any cache backend.
+        try:
+            cache.delete_pattern("blog:rss:*")
+        except AttributeError:
+            # Non-redis backend — delete known keys manually
+            cache.delete("blog:rss:latest")
+            logger.warning("delete_pattern not available; cleared known RSS keys only")
         logger.info("RSS feed cache cleared")
     except Exception as exc:
         raise self.retry(exc=exc, countdown=60)
@@ -65,7 +70,6 @@ def sync_view_counts():
         redis_count = cache.get(redis_key)
 
         if redis_count:
-            # F() expression = atomic DB increment (no race condition)
             Blog.objects.filter(id=blog.id).update(
                 views=models.F("views") + int(redis_count)
             )
