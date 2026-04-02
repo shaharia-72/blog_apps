@@ -8,6 +8,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.sitemaps.views import sitemap
+from django.views.generic import RedirectView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 from apps.blog.sitemaps import BlogSitemap, CategorySitemap, StaticViewSitemap
@@ -22,6 +23,9 @@ sitemaps = {
 }
 
 urlpatterns = [
+    # ── Root Redirect ─────────────────────────────────────────
+    path('', RedirectView.as_view(url='api/docs/', permanent=False)),
+
     # ── Django Admin ──────────────────────────────────────────
     path('admin/', admin.site.urls),
 
