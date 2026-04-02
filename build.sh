@@ -5,6 +5,9 @@ set -o errexit
 echo "Installing dependencies..."
 pip install -r requirements.txt
 
+echo "Creating logs directory for Django logging..."
+mkdir -p logs
+
 echo "Collecting static files..."
 python manage.py collectstatic --no-input
 
