@@ -21,6 +21,7 @@ from .serializers import (
     AdminTokenObtainPairSerializer,
 )
 from core.permissions import IsAdminUser
+from drf_spectacular.utils import extend_schema
 
 User = get_user_model()
 
@@ -28,6 +29,7 @@ User = get_user_model()
 # =========================================================
 # 🔐 ADMIN LOGIN VIEW
 # =========================================================
+@extend_schema(tags=["Auth"])
 class AdminLoginView(TokenObtainPairView):
     """
     POST /api/v1/admin/auth/login/
@@ -52,6 +54,7 @@ class AdminLoginView(TokenObtainPairView):
 # =========================================================
 # 🚪 ADMIN LOGOUT VIEW
 # =========================================================
+@extend_schema(tags=["Auth"])
 class AdminLogoutView(APIView):
     """
     POST /api/v1/admin/auth/logout/
@@ -98,6 +101,7 @@ class AdminLogoutView(APIView):
 # =========================================================
 # 👤 ADMIN PROFILE VIEW
 # =========================================================
+@extend_schema(tags=["Admin"])
 class AdminProfileView(APIView):
     """
     GET    /api/v1/admin/auth/profile/   → Get profile

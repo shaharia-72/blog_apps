@@ -16,8 +16,10 @@ from datetime import timedelta, date
 
 from core.permissions import IsAdminUser
 from .models import BlogView, HourlyBlogStat, VisitorSession, PopularContent
+from drf_spectacular.utils import extend_schema
 
 
+@extend_schema(tags=["Analytics"])
 class PublicStatsView(APIView):
     """
     GET /api/v1/analytics/stats/

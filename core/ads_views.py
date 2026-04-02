@@ -17,8 +17,10 @@ from django.http import HttpResponse
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
+from drf_spectacular.utils import extend_schema
 
 
+@extend_schema(tags=["Monetization"])
 class AdsTxtView(APIView):
     """
     GET /ads.txt

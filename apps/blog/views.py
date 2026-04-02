@@ -42,9 +42,19 @@ LIST_TTL = settings.BLOG_SETTINGS["CACHE_BLOG_LIST_TTL"]
 DETAIL_TTL = settings.BLOG_SETTINGS["CACHE_BLOG_DETAIL_TTL"]
 
 
+from drf_spectacular.utils import extend_schema, extend_schema_view
+
+
 # ── Public Blog ViewSet ───────────────────────────────────────
 
 
+@extend_schema_view(
+    list=extend_schema(tags=["Blog"]),
+    retrieve=extend_schema(tags=["Blog"]),
+    featured=extend_schema(tags=["Blog"]),
+    view=extend_schema(tags=["Blog"]),
+    stats=extend_schema(tags=["Blog"]),
+)
 class BlogViewSet(viewsets.ReadOnlyModelViewSet):
     """
     GET /api/v1/blogs/              → Paginated, filterable blog list
@@ -211,6 +221,10 @@ class BlogViewSet(viewsets.ReadOnlyModelViewSet):
 # ── Public Category ViewSet ───────────────────────────────────
 
 
+@extend_schema_view(
+    list=extend_schema(tags=["Blog"]),
+    retrieve=extend_schema(tags=["Blog"]),
+)
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """
     GET /api/v1/blogs/categories/        → All active categories
@@ -235,6 +249,10 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
 # ── Public Tag ViewSet ────────────────────────────────────────
 
 
+@extend_schema_view(
+    list=extend_schema(tags=["Blog"]),
+    retrieve=extend_schema(tags=["Blog"]),
+)
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     """GET /api/v1/blogs/tags/ — Tags that have at least one published post."""
 
@@ -250,6 +268,16 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 # ── Admin Blog ViewSet ────────────────────────────────────────
 
 
+@extend_schema_view(
+    list=extend_schema(tags=["Admin"]),
+    create=extend_schema(tags=["Admin"]),
+    retrieve=extend_schema(tags=["Admin"]),
+    update=extend_schema(tags=["Admin"]),
+    partial_update=extend_schema(tags=["Admin"]),
+    destroy=extend_schema(tags=["Admin"]),
+    publish=extend_schema(tags=["Admin"]),
+    unpublish=extend_schema(tags=["Admin"]),
+)
 class AdminBlogViewSet(viewsets.ModelViewSet):
     """
     Full CRUD for admin. Sees ALL posts including drafts.

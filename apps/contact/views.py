@@ -17,8 +17,10 @@ from .models import ContactMessage
 from .serializers import ContactFormSerializer, ContactMessageAdminSerializer
 from .tasks import notify_admin_new_contact
 from core.permissions import IsAdminUser
+from drf_spectacular.utils import extend_schema, extend_schema_view
 
 
+@extend_schema(tags=["Blog"])
 class ContactView(APIView):
     """
     POST /api/v1/contact/
@@ -59,6 +61,12 @@ class ContactView(APIView):
         )
 
 
+@extend_schema_view(
+    list=extend_schema(tags=["Admin"]),
+    retrieve=extend_schema(tags=["Admin"]),
+    partial_update=extend_schema(tags=["Admin"]),
+    destroy=extend_schema(tags=["Admin"]),
+)
 class AdminContactViewSet(viewsets.ModelViewSet):
     """
     Admin contact inbox.

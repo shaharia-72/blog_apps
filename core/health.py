@@ -12,8 +12,10 @@ from django.core.cache import cache
 from django.db import connection
 from django.conf import settings
 import time
+from drf_spectacular.utils import extend_schema
 
 
+@extend_schema(tags=["Analytics"])
 class HealthCheckView(APIView):
     """
     GET /api/v1/health/

@@ -122,7 +122,23 @@ Finally, we added the "Premium" features:
 
 ---
 
-## 🎨 9. Final Polish Checklist
+## 🛠️ 10. How to Manage Swagger Tags
+
+If you add a new View or ViewSet, ensure it appears in the right Swagger category by using the `@extend_schema` decorator:
+
+```python
+from drf_spectacular.utils import extend_schema
+
+@extend_schema(tags=['Blog'])  # This puts the view in the 'Blog' section
+class MyNewView(APIView):
+    ...
+```
+
+**Available Tags:** `Blog`, `Admin`, `Auth`, `Analytics`, `Monetization`.
+
+---
+
+## 🎨 11. Final Polish Checklist
 
 - [x] Check `/api/docs/` for new Premium Swagger documentation.
 - [x] Ensure `build.sh` and `start.sh` are pushed to GitHub.

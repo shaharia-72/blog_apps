@@ -18,8 +18,10 @@ from .serializers import SubscribeSerializer, SubscriberAdminSerializer
 from .tasks import send_confirmation_email
 from core.permissions import IsAdminUser
 from core.utils import generate_confirm_token, verify_confirm_token
+from drf_spectacular.utils import extend_schema, extend_schema_view
 
 
+@extend_schema(tags=["Blog"])
 class SubscribeView(APIView):
     """
     POST /api/v1/newsletter/subscribe/
@@ -59,6 +61,7 @@ class SubscribeView(APIView):
         )
 
 
+@extend_schema(tags=["Blog"])
 class ConfirmSubscriptionView(APIView):
     """
     GET /api/v1/newsletter/confirm/{token}/
@@ -99,6 +102,7 @@ class ConfirmSubscriptionView(APIView):
         )
 
 
+@extend_schema(tags=["Blog"])
 class UnsubscribeView(APIView):
     """
     POST /api/v1/newsletter/unsubscribe/
@@ -143,6 +147,10 @@ class UnsubscribeView(APIView):
         return Response({"message": "You have been unsubscribed."})
 
 
+@extend_schema_view(
+    list=extend_schema(tags=["Admin"]),
+    retrieve=extend_schema(tags=["Admin"]),
+)
 class AdminSubscriberViewSet(viewsets.ReadOnlyModelViewSet):
     """
     GET /api/v1/admin/newsletter/subscribers/
