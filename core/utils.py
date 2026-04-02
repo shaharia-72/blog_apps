@@ -309,3 +309,84 @@ def build_seo_meta(
             },
         },
     }
+
+
+# ── Dynamic OG Image Generation ───────────────────────────────
+
+
+def generate_blog_og_image(title: str, category_name: str = "Technical Blog"):
+    """
+    Generate a professional-looking Open Graph image for social sharing.
+    Uses a gradient background, the blog title, and the site name.
+    
+    Why?
+    → Social media sharing (LinkedIn/Twitter) requires an image for high CTR.
+    → If author doesn't upload a cover, this provides a premium fallback.
+    """
+    from PIL import Image, ImageDraw, ImageFont
+    import io
+    import random
+
+    # 1. Setup dimensions (standard OG size)
+    width, height = 1200, 630
+    
+    # 2. Choice of professional linear gradients
+    gradients = [
+        ((99, 102, 241), (168, 85, 247)), # Indigo to Purple
+        ((30, 41, 59), (71, 85, 105)),  # Slate Dark
+        ((6, 182, 212), (59, 130, 246)), # Cyan to Blue
+    ]
+    color1, color2 = random.choice(gradients)
+
+    # Create base image with gradient
+    image = Image.new("RGB", (width, height), color1)
+    draw = ImageDraw.Draw(image)
+
+    # Simple horizontal gradient simulation
+    for i in range(height):
+        r = int(color1[0] + (color2[0] - color1[0]) * (i / height))
+        g = int(color1[1] + (color2[1] - color1[1]) * (i / height))
+        b = int(color1[2] + (color2[2] - color1[2]) * (i / height))
+        draw.line([(0, i), (width, i)], fill=(r, g, b))
+
+    # 3. Draw Branding / Site Name
+    site_name = settings.SITE_NAME.upper()
+    try:
+        # Try to find a standard font on the system
+        font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+        brand_font = ImageFont.truetype(font_path, 32)
+        title_font = ImageFont.truetype(font_path, 64)
+    except Exception:
+        # Fallback to default if font not found
+        brand_font = ImageFont.load_default()
+        title_font = ImageFont.load_default()
+
+    draw.text((80, 80), site_name, font=brand_font, fill=(255, 255, 255, 180))
+    draw.text((80, 130), category_name, font=brand_font, fill=(255, 255, 255, 120))
+
+    # 4. Draw Title (with wrapping)
+    # Simple wrapping for 1200px width
+    chars_per_line = 30
+    lines = []
+    words = title.split()
+    current_line = []
+    
+    for word in words:
+        if len(" ".join(current_line + [word])) <= chars_per_line:
+            current_line.append(word)
+        else:
+            lines.append(" ".join(current_line))
+            current_line = [word]
+    lines.append(" ".join(current_line))
+
+    # Vertically center the title block
+    y_text = 250
+    for line in lines[:4]: # Max 4 lines
+        draw.text((80, y_text), line, font=title_font, fill=(255, 255, 255))
+        y_text += 80
+
+    # 5. Return as BytesIO
+    buffer = io.BytesIO()
+    image.save(buffer, format="JPEG", quality=90)
+    buffer.seek(0)
+    return buffer

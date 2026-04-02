@@ -272,6 +272,20 @@ class Blog(models.Model):
             if text:
                 self.read_time = calculate_read_time(text)
 
+        # ── AUTO-GENERATE COVER IMAGE (if missing) ────────────
+        if not self.cover_image and update_fields is None:
+            from core.utils import generate_blog_og_image
+            from django.core.files.base import ContentFile
+            
+            category_name = self.category.name if self.category else "Technical Blog"
+            img_buffer = generate_blog_og_image(self.title, category_name)
+            
+            self.cover_image.save(
+                f"auto_og_{self.slug}.jpg",
+                ContentFile(img_buffer.read()),
+                save=False
+            )
+
         super().save(*args, **kwargs)
 
     def __str__(self):

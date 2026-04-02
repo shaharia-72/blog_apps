@@ -1,0 +1,69 @@
+name: Django CI/CD
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-dev.txt
+
+    - name: Run Linting (Black & Isort)
+      run: |
+        black --check .
+        isort --check-only .
+
+    - name: Run Security Check (Bandit)
+      run: |
+        pip install bandit
+        bandit -r . -x ./.venv,./tests -ll
+
+    - name: Check Database Migrations
+      env:
+        SECRET_KEY: "temporary-secret-key-for-ci"
+        JWT_SECRET_KEY: "temporary-secret-key-for-ci"
+        USE_POSTGRES: False
+        REDIS_URL: redis://localhost:6379/0
+        REDIS_SESSION_URL: redis://localhost:6379/1
+      run: |
+        python manage.py makemigrations --check --dry-run
+        python manage.py check
+
+    - name: Run Tests (Pytest)
+      env:
+        SECRET_KEY: "temporary-secret-key-for-ci"
+        JWT_SECRET_KEY: "temporary-secret-key-for-ci"
+        USE_POSTGRES: False
+        REDIS_URL: redis://localhost:6379/0
+        REDIS_SESSION_URL: redis://localhost:6379/1
+      run: |
+        # We will create a basic test suite next
+        # pytest
+        echo "Skipping pytest until basic tests are created"

@@ -71,6 +71,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "core.middleware.RequestTimingMiddleware",  # Log slow requests
     "core.middleware.SecurityHeadersMiddleware",  # Security headers
+    "core.middleware.RatelimitMiddleware",  # Handles 429 Too Many Requests
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -106,7 +107,10 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-MEDIA_URL = "/media/"
+# ── WhiteNoise RAM Savings ────────────────────────────────────
+# Prevents WhiteNoise from keeping uncompressed files in memory
+WHITENOISE_KEEP_ONLY_HASHED_FILES = True
+WHITENOISE_MAX_AGE = 31536000  # 1 year cache
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -201,13 +205,18 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
-CELERY_TASK_SOFT_TIME_LIMIT = 300  # 5 min soft limit
-CELERY_TASK_TIME_LIMIT = 600  # 10 min hard kill
 CELERY_TASK_ROUTES = {
     "apps.newsletter.tasks.*": {"queue": "email"},
     "apps.contact.tasks.*": {"queue": "email"},
     "apps.analytics.tasks.*": {"queue": "analytics"},
 }
+
+# ── RAM Safety Limits (Render 512MB optimization) ───────────
+# Kill worker if it exceeds 250MB (prevents OOM kill of whole container)
+CELERY_WORKER_MAX_MEMORY_PER_CHILD = 250000  # 250MB in KB
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 20       # Restart after 20 tasks
+CELERY_TASK_SOFT_TIME_LIMIT = 240            # 4 min
+CELERY_TASK_TIME_LIMIT = 300                 # 5 min
 
 # ── Email ─────────────────────────────────────────────────────
 EMAIL_BACKEND = config(
@@ -288,4 +297,34 @@ FEED_SETTINGS = {
     "TITLE": config("SITE_NAME", default="YourBlog") + " — Latest Posts",
     "DESCRIPTION": "Latest articles on System Design, DSA, AI/ML, Python, and more.",
     "ITEMS_COUNT": 20,  # Number of posts in RSS feed
+}
+
+# ── API Documentation (drf-spectacular) ────────────────────────
+SPECTACULAR_SETTINGS = {
+    "TITLE": f"{config('SITE_NAME', default='Blog')} API",
+    "DESCRIPTION": "High-performance backend for professional blogging and portfolios.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_PATCH": True,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "CONTACT": {
+        "name": "Shaharia",
+        "email": config("ADMIN_EMAIL", default=""),
+    },
+    "LICENSE": {"name": "MIT License"},
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "displayOperationId": True,
+        "defaultModelsExpandDepth": 1,
+        "defaultModelExpandDepth": 1,
+        "persistAuthorization": True,
+    },
+    # Grouping and UI branding
+    "TAGS": [
+        {"name": "Blog", "description": "Public content and reading endpoints"},
+        {"name": "Admin", "description": "Internal management (JWT Required)"},
+        {"name": "Auth", "description": "JWT Token management"},
+        {"name": "Analytics", "description": "View tracking and performance metrics"},
+        {"name": "Monetization", "description": "Ads and affiliate tracking"},
+    ],
 }

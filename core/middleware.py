@@ -50,3 +50,27 @@ class SecurityHeadersMiddleware:
         response["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         return response
+
+
+class RatelimitMiddleware:
+    """
+    Catch Ratelimited exception from django-ratelimit and return JSON 429.
+    Required for professional REST API responses.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return self.get_response(request)
+
+    def process_exception(self, request, exception):
+        from django_ratelimit.exceptions import Ratelimited
+        from django.http import JsonResponse
+
+        if isinstance(exception, Ratelimited):
+            return JsonResponse(
+                {"error": "Too many requests. Please slow down and try again later. 🛑"},
+                status=429,
+            )
+        return None
