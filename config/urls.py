@@ -13,6 +13,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 from apps.blog.sitemaps import BlogSitemap, CategorySitemap, StaticViewSitemap
 from apps.blog.feeds import LatestBlogsFeed, CategoryBlogsFeed
 from apps.monetization.views import AffiliateRedirectView
+from core.health import HealthCheckView
 
 sitemaps = {
     'blogs':      BlogSitemap,
@@ -30,6 +31,7 @@ urlpatterns = [
 
     # ── Public API ────────────────────────────────────────────
     path('api/v1/', include([
+        path('health/',       HealthCheckView.as_view(), name='health-check'),
         path('blogs/',        include('apps.blog.urls')),
         path('projects/',     include('apps.projects.urls')),
         path('newsletter/',   include('apps.newsletter.urls')),
@@ -55,6 +57,11 @@ urlpatterns = [
     path('feed/',               LatestBlogsFeed(),                 name='rss-feed'),
     path('feed/<slug:slug>/',   CategoryBlogsFeed(),               name='rss-feed-category'),
     path('robots.txt',          include('robots.urls')),
+
+    # ── AdSense ───────────────────────────────────────────────
+    # Google requires /ads.txt at your domain root for ad verification.
+    # Update the publisher ID in core/views.py after getting your AdSense account.
+    path('ads.txt', include('core.ads_urls')),
 
     # ── API Docs ──────────────────────────────────────────────
     path('api/schema/',  SpectacularAPIView.as_view(),             name='schema'),

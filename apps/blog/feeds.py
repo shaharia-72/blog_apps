@@ -31,7 +31,12 @@ class LatestBlogsFeed(Feed):
 
     def items(self):
         count = settings.FEED_SETTINGS.get("ITEMS_COUNT", 20)
-        return Blog.objects.published().order_by("-published_at")[:count]
+        return (
+            Blog.objects.published()
+            .select_related("author", "category")
+            .prefetch_related("tags")
+            .order_by("-published_at")[:count]
+        )
 
     def item_title(self, item):
         return item.title
@@ -53,7 +58,7 @@ class LatestBlogsFeed(Feed):
         return item.author.get_full_name() or item.author.username
 
     def item_categories(self, item):
-        """Tags shown as feed categories."""
+        """Tags shown as feed categories. Prefetched — no extra queries."""
         return [t.name for t in item.tags.all()]
 
 
@@ -67,7 +72,9 @@ class CategoryBlogsFeed(Feed):
     feed_type = Rss201rev2Feed
 
     def get_object(self, request, slug):
-        return Category.objects.get(slug=slug, is_active=True)
+        # FIX H7: Use get_object_or_404 — prevents unhandled 500 errors
+        from django.shortcuts import get_object_or_404
+        return get_object_or_404(Category, slug=slug, is_active=True)
 
     def title(self, obj):
         site = settings.SEO_SETTINGS["SITE_NAME"]
@@ -87,6 +94,8 @@ class CategoryBlogsFeed(Feed):
         return (
             Blog.objects.published()
             .filter(category=obj)
+            .select_related("author", "category")
+            .prefetch_related("tags")
             .order_by("-published_at")[:count]
         )
 

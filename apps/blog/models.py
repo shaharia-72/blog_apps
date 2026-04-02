@@ -260,7 +260,10 @@ class Blog(models.Model):
             self.published_at = timezone.now()
 
         # Auto-calculate read time from markdown sections
-        if self.pk:
+        # ONLY on full saves — skip when update_fields is specified
+        # (e.g., view count sync, status change) to avoid N+1 queries
+        update_fields = kwargs.get('update_fields')
+        if self.pk and update_fields is None:
             text = " ".join(
                 s.content
                 for s in self.sections.filter(section_type="markdown")

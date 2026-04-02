@@ -67,7 +67,9 @@ def send_weekly_digest():
     """
     Send weekly new-posts digest to all active subscribers.
     Scheduled every Monday at 9am via celery beat.
-    Sends in batches of 100 to avoid memory issues.
+
+    FIX H4: Uses iterator() to stream subscribers from DB instead of
+    loading all into memory at once. Prevents OOM with large lists.
     """
     from apps.blog.models import Blog
     from .models import Subscriber
@@ -85,15 +87,7 @@ def send_weekly_digest():
         logger.info("No new posts this week — skipping newsletter digest")
         return
 
-    subscribers = list(
-        Subscriber.objects.filter(status="active").values_list("email", flat=True)
-    )
-
-    if not subscribers:
-        logger.info("No active subscribers")
-        return
-
-    # Build email body
+    # Build email body once (shared across all batches)
     post_lines = "\n".join(
         f"  • {p.title} ({p.read_time} min read)\n"
         f"    {settings.SEO_SETTINGS['SITE_URL']}/blog/{p.slug}/"
@@ -118,21 +112,38 @@ def send_weekly_digest():
     except Exception:
         html_body = None
 
-    # Send in batches of 100 — BCC keeps addresses private
-    for i in range(0, len(subscribers), 100):
-        batch = subscribers[i : i + 100]
-        msg = EmailMultiAlternatives(
-            subject=f"📰 New on {settings.SEO_SETTINGS['SITE_NAME']} — {new_posts.count()} posts this week",
-            body=text_body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[settings.DEFAULT_FROM_EMAIL],  # "to" yourself
-            bcc=batch,  # BCC subscribers (privacy)
-        )
-        if html_body:
-            msg.attach_alternative(html_body, "text/html")
-        msg.send()
+    # Stream subscribers and send in batches of 100 — never loads all into memory
+    batch = []
+    total_sent = 0
+    subscriber_qs = Subscriber.objects.filter(status="active").values_list("email", flat=True)
 
-    logger.info(f"Weekly digest sent to {len(subscribers)} subscribers")
+    for email in subscriber_qs.iterator(chunk_size=100):
+        batch.append(email)
+        if len(batch) >= 100:
+            _send_digest_batch(batch, text_body, html_body, new_posts)
+            total_sent += len(batch)
+            batch = []
+
+    # Send remaining
+    if batch:
+        _send_digest_batch(batch, text_body, html_body, new_posts)
+        total_sent += len(batch)
+
+    logger.info(f"Weekly digest sent to {total_sent} subscribers")
+
+
+def _send_digest_batch(emails, text_body, html_body, new_posts):
+    """Send digest email to a batch of subscribers via BCC."""
+    msg = EmailMultiAlternatives(
+        subject=f"📰 New on {settings.SEO_SETTINGS['SITE_NAME']} — {new_posts.count()} posts this week",
+        body=text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[settings.DEFAULT_FROM_EMAIL],  # "to" yourself
+        bcc=list(emails),  # BCC subscribers (privacy)
+    )
+    if html_body:
+        msg.attach_alternative(html_body, "text/html")
+    msg.send()
 
 
 @shared_task(queue="email")

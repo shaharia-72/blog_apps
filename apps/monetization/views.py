@@ -108,6 +108,10 @@ class AdminRevenueDashboardView(APIView):
             .annotate(total=Sum("amount_usd"), count=Count("id"))
             .order_by("-total")
         )
+        # Fix H9: Cast Decimal to float for proper JSON serialization
+        for item in by_source:
+            if item.get("total") is not None:
+                item["total"] = float(item["total"])
 
         # FIX: Use TruncMonth() — .extra() is deprecated in Django 4+ and removed in Django 6
         # Old (WRONG): .extra(select={'month': "DATE_TRUNC('month', event_date)"})
@@ -119,6 +123,9 @@ class AdminRevenueDashboardView(APIView):
             .annotate(total=Sum("amount_usd"))
             .order_by("month")
         )
+        for item in monthly:
+            if item.get("total") is not None:
+                item["total"] = float(item["total"])
 
         top_affiliates = list(
             AffiliateLink.objects.filter(is_active=True)

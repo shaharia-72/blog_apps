@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: blog-shaha-backend
+    env: python
+    region: singapore # Change this depending on where your users are (frankfurt, ohio, oregon)
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "./start.sh"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DJANGO_ENV
+        value: production
+      # We don't define the passwords/secrets here for security.
+      # You will add these manually in the Render Dashboard (Environment tab)
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: REDIS_SESSION_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false

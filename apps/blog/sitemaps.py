@@ -16,6 +16,7 @@ from .models import Blog, Category
 class BlogSitemap(Sitemap):
     changefreq = "weekly"
     priority = 0.8
+    i18n = True # FIX M15: Enables multilingual hreflang variations if USE_I18N=True
 
     def items(self):
         return Blog.objects.published().order_by("-updated_at")
@@ -24,12 +25,14 @@ class BlogSitemap(Sitemap):
         return obj.updated_at
 
     def location(self, obj):
+        # When i18n=True, Django automatically prefixes the lang code if translation active
         return f"/blog/{obj.slug}/"
 
 
 class CategorySitemap(Sitemap):
     changefreq = "weekly"
     priority = 0.6
+    i18n = True
 
     def items(self):
         return Category.objects.filter(is_active=True)
@@ -49,6 +52,7 @@ class StaticViewSitemap(Sitemap):
     """
 
     changefreq = "monthly"
+    i18n = True
     # NOTE: Do NOT add `priority = 0.5` here — the method below handles it.
 
     def items(self):

@@ -1,9 +1,12 @@
 services:
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    # Production: use Gunicorn (from Dockerfile CMD), not runserver
+    # Override with 'command: python manage.py runserver 0.0.0.0:8000' for dev 
     volumes:
       - .:/app
+      - static-files:/app/staticfiles
+      - media-files:/app/media
     ports:
       - "8000:8000"
     env_file:
@@ -11,6 +14,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
@@ -23,6 +27,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   celery:
     build: .
@@ -38,6 +43,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    restart: unless-stopped
 
   celery-beat:
     build: .
@@ -52,6 +58,9 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   redis-data:
+  static-files:
+  media-files:

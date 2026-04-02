@@ -259,11 +259,18 @@ class BlogDetailSerializer(serializers.ModelSerializer):
 
     def get_related_posts(self, obj):
         """
-        Find related posts:
+        Find related posts (cached 30 minutes per blog slug):
         1. Same category + overlapping tags (most relevant)
         2. Fallback to recent posts from same category
         Returns max RELATED_POSTS_COUNT (default 3).
         """
+        from django.core.cache import cache
+
+        cache_key = f"blog:related:{obj.slug}"
+        cached = cache.get(cache_key)
+        if cached:
+            return cached
+
         count = settings.BLOG_SETTINGS.get("RELATED_POSTS_COUNT", 3)
         tag_ids = obj.tags.values_list("id", flat=True)
 
@@ -282,7 +289,9 @@ class BlogDetailSerializer(serializers.ModelSerializer):
                 .order_by("-published_at")[:count]
             )
 
-        return BlogListSerializer(related, many=True, context=self.context).data
+        data = BlogListSerializer(related, many=True, context=self.context).data
+        cache.set(cache_key, data, 60 * 30)  # 30 minutes
+        return data
 
 
 # ── Admin Write Serializers ───────────────────────────────────

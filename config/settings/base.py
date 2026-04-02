@@ -15,7 +15,6 @@ SECRET_KEY = config("SECRET_KEY")
 
 # ── Apps ──────────────────────────────────────────────────────
 DJANGO_APPS = [
-    # "apps.users",
     "admin_interface",  # Beautiful admin — MUST be before django.contrib.admin
     "colorfield",
     "django.contrib.admin",
@@ -177,7 +176,7 @@ CACHES = {
         "LOCATION": config("REDIS_URL", default="redis://localhost:6379/0"),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "CONNECTION_POOL_KWARGS": {"max_connections": 100, "timeout": 20},
+            "CONNECTION_POOL_KWARGS": {"max_connections": 100},
             "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
         },
         "KEY_PREFIX": "blog",

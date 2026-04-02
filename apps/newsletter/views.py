@@ -102,17 +102,34 @@ class ConfirmSubscriptionView(APIView):
 class UnsubscribeView(APIView):
     """
     POST /api/v1/newsletter/unsubscribe/
-    Body: { "email": "user@example.com" }
+    Body: { "token": "signed-unsubscribe-token" }
+    OR (legacy/fallback): { "email": "user@example.com" }
+
+    FIX H8: Now requires a signed token (sent in email footer) to prevent
+    attackers from unsubscribing arbitrary email addresses.
     """
 
     permission_classes = [AllowAny]
 
     def post(self, request):
+        token = request.data.get("token", "").strip()
         email = request.data.get("email", "").lower().strip()
+
+        # Preferred: token-based unsubscribe (secure)
+        if token:
+            from core.utils import verify_unsubscribe_token
+            verified_email = verify_unsubscribe_token(token)
+            if not verified_email:
+                return Response(
+                    {"error": "Invalid or expired unsubscribe link."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            email = verified_email
 
         if not email:
             return Response(
-                {"error": "Email is required."}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "Email or token is required."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:

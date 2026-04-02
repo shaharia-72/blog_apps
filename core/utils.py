@@ -199,6 +199,10 @@ def _get_signer():
     return URLSafeTimedSerializer(settings.SECRET_KEY, salt="newsletter-confirm-v1")
 
 
+def _get_unsub_signer():
+    return URLSafeTimedSerializer(settings.SECRET_KEY, salt="newsletter-unsubscribe-v1")
+
+
 def generate_confirm_token(email: str) -> str:
     """
     Create a signed, time-limited token for email confirmation.
@@ -221,6 +225,32 @@ def verify_confirm_token(token: str) -> str | None:
         return None
     except BadSignature:
         logger.warning("Invalid/tampered email confirmation token rejected")
+        return None
+
+
+def generate_unsubscribe_token(email: str) -> str:
+    """
+    Create a signed token for unsubscribe links in emails.
+    Uses a different salt than confirm tokens — can't be cross-used.
+    Longer expiry (30 days) since old emails stay in inboxes.
+    """
+    return _get_unsub_signer().dumps(email.lower().strip())
+
+
+def verify_unsubscribe_token(token: str) -> str | None:
+    """
+    Decode and verify unsubscribe token.
+    Returns email if valid, None if expired or tampered.
+    30-day expiry — unsubscribe links should work for a while.
+    """
+    max_age = 60 * 60 * 24 * 30  # 30 days
+    try:
+        return _get_unsub_signer().loads(token, max_age=max_age)
+    except SignatureExpired:
+        logger.info("Expired unsubscribe token used")
+        return None
+    except BadSignature:
+        logger.warning("Invalid/tampered unsubscribe token rejected")
         return None
 
 

@@ -59,6 +59,9 @@ def sync_view_counts():
       we increment a Redis counter (microseconds, no DB hit),
       then once per hour flush all counters to DB in one operation.
       This reduces DB write load by ~99% under high traffic.
+
+    FIX: Use atomic decrement instead of get-then-delete to prevent
+    losing views that arrive between the read and delete operations.
     """
     from apps.blog.models import Blog
 
@@ -70,10 +73,18 @@ def sync_view_counts():
         redis_count = cache.get(redis_key)
 
         if redis_count:
-            Blog.objects.filter(id=blog.id).update(
-                views=models.F("views") + int(redis_count)
-            )
-            cache.delete(redis_key)
-            synced += 1
+            count = int(redis_count)
+            if count > 0:
+                Blog.objects.filter(id=blog.id).update(
+                    views=models.F("views") + count
+                )
+                # Atomic: subtract only what we synced, don't delete the key.
+                # New views that arrived between get() and here are preserved.
+                try:
+                    cache.decr(redis_key, count)
+                except ValueError:
+                    # Key was deleted or went negative — safe to ignore
+                    cache.delete(redis_key)
+                synced += 1
 
     logger.info(f"Synced view counts for {synced} blogs")

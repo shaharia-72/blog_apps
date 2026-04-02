@@ -19,16 +19,8 @@ class StorageSettingsAdmin(admin.ModelAdmin):
     fieldsets = [
         ('Storage Backend', {
             'fields': ['storage_backend'],
-            'description': 'Choose where to store uploaded media files.'
-        }),
-        ('Cloudinary Configuration', {
-            'fields': [
-                'cloudinary_cloud_name',
-                'cloudinary_api_key',
-                'cloudinary_api_secret',
-            ],
-            'classes': ['collapse'],
-            'description': 'Required only if Cloudinary is selected above.',
+            'description': 'Choose where to store uploaded media files. '
+                           'Cloudinary credentials are configured in the .env file.'
         }),
         ('Upload Settings', {
             'fields': ['max_upload_size_mb', 'allowed_image_formats'],

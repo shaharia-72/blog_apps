@@ -71,6 +71,11 @@ class AdminDashboardView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
+        cache_key = "admin:dashboard"
+        cached = cache.get(cache_key)
+        if cached:
+            return Response(cached)
+
         from apps.blog.models import Blog
         from apps.newsletter.models import Subscriber
         from apps.contact.models import ContactMessage
@@ -265,6 +270,7 @@ class AdminDashboardView(APIView):
             "daily_trends": daily_stats,
         }
 
+        cache.set(cache_key, data, 60)  # 1 minute cache
         return Response(data)
 
 

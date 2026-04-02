@@ -13,6 +13,10 @@ class StorageSettings(models.Model):
     Global storage configuration.
     Admin can toggle between Cloudinary and local storage.
     Singleton model - only one instance exists.
+
+    NOTE: Cloudinary credentials (CLOUD_NAME, API_KEY, API_SECRET) are stored
+    in .env file only — never in the database. This prevents exposure via
+    SQL injection, database backups, or admin panel access.
     """
 
     STORAGE_CHOICES = [
@@ -24,13 +28,9 @@ class StorageSettings(models.Model):
         max_length=20,
         choices=STORAGE_CHOICES,
         default='local',
-        help_text="Choose where to store uploaded media files"
+        help_text="Choose where to store uploaded media files. "
+                  "Cloudinary credentials must be set in .env file."
     )
-
-    # Cloudinary credentials (only used if cloudinary is selected)
-    cloudinary_cloud_name = models.CharField(max_length=200, blank=True)
-    cloudinary_api_key = models.CharField(max_length=200, blank=True)
-    cloudinary_api_secret = models.CharField(max_length=200, blank=True)
 
     # Settings
     max_upload_size_mb = models.PositiveIntegerField(
